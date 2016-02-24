@@ -1,0 +1,68 @@
+#maincontainer{
+	margin-left: auto;
+	margin-right: auto;
+	width: 400px;
+	height: 220px;
+	margin-top: 200px;
+	border: 1px solid;
+	background-color: #EBEBEB;
+	animation-name: fadeload;
+	animation-duration: 5s;
+
+}
+
+#footercontainer{
+	margin-left: auto;
+	margin-right: auto;
+	width: 400px;
+	margin-top: 3px;
+	border: 1px solid;
+	background-color: #90BDD4;
+	display: none;
+	
+
+}
+
+.inner{
+
+	width: 360px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 50px;
+}
+
+input{
+	width: 70%;
+	margin-right: 10px;
+	float: right;
+}
+
+label{
+	
+
+}
+
+button{
+	margin-right: 10px;
+	float: right;
+	width: 80px;
+	height: 30px;
+
+}
+
+body{
+	background-image: url('http://www.indexingtabs.com/v/vspfiles/assets/images/phonebookpic.jpg');
+    background-repeat: no-repeat;
+    background-position: left;
+}
+
+.row{
+	width: 100%;
+	margin-top: 10px;
+}
+
+/* this is only for demonstrating CSS features and is not part of the course requirements */
+@keyframes fadeload {
+    from {opacity: 0  }
+    to {opacity: 1 }
+}

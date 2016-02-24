@@ -1,0 +1,51 @@
+<!--
+Author: Sahand Sadjadee
+App: iPhonebook
+Description: the client-side of iPhonebook.
+
+-->
+		<div id="maincontainer">
+			<form method="POST" action="#" id="saveform" onsubmit="return false">
+				<div class="inner">
+					
+						<div class="row"><label for="firstname">First name</label><input type="text" id="firstname" name="firstname" required></div>
+						<div class="row"><label for="familyname">Family name</label><input type="text" id="familyname" name="familyname" required></div>
+						<div class="row"><label for="mobile">Mobile</label><input type="text" id="number" name="mobile" required></div>
+					
+				</div>
+				<div class="inner">
+					<button type="submit" value="save" name="save" id="savesave">Save</button>
+					<button type="submit"  value="reset" name="reset" id="savereset">Reset</button>
+				</div>
+			</form>
+			
+		</div>
+
+
+		<div id="maincontainer">
+			<form method="POST" action="#" id="searchform" onsubmit="return false">
+				<div class="inner">
+					
+						<div class="row"><label for="firstname">First name</label><input type="text" id="firstname" name="firstname" required></div>
+						<div class="row"><label for="familyname">Family name</label><input type="text" id="familyname" name="familyname" required></div>
+						
+						
+					
+				</div>
+				<div class="inner">
+					<button type="submit" value="save" name="save" id="searchsearch">Search</button>
+					<button type="submit"  value="reset" name="reset" id="searchreset">Reset</button>
+				</div>
+			</form>
+			
+			
+		</div>
+		<div id="footercontainer">
+			<table id="searchresult" class="inner">
+			  <tr>
+			    <th>Name</th>
+				<th>Mobile number</th>
+			  </tr>
+			  
+			</table>	
+		</div>
