@@ -40,15 +40,13 @@ var loginForm = {
         var email = formData.email.value;
         var password = formData.password.value;
         var loginresult = serverstub.signIn(email,password);
-        console.log(loginresult.success);
+        console.log(loginresult.message);
         
         if(loginresult.success) {
-            console.log('loginForm: Successful login');
 //            document.getElementById("loginerrormsg").innerHTML = loginresult.message.value; //Placeholder
             localStorage.setItem("logintoken", loginresult.data);
             setCurrentView();
         } else {
-            console.log('loginForm: Login error');
             formData.password.value = "";
             document.getElementById("loginerrormsg").innerHTML = loginresult.message;
         }
@@ -120,7 +118,7 @@ displayView = function(){
 };
 
 var init = function(){
-    console.log('initializing');
+    console.log('Initializing page');
     setCurrentView();   
 
 };
@@ -151,15 +149,21 @@ var initProfileView = function(){
     document.getElementById("homecountry").innerHTML=userdata.country;
     
     homeRefreshWallMessages();
+    
+    var current_tab = localStorage.getItem("currenttab");
+    
+    if (current_tab == "home") {
+        console.log("Refresh: Loading home");
+        displayHometab();
+    } else if (current_tab == "browse") {
+        displayBrowsetab();
+        console.log("Refresh: Loading browse");
+    } else if (current_tab == "account"){
+        displayAccounttab();
+        console.log("Refresh: Loading account");
+    }
 }
 
-var initBrowseView = function(){
-    document.getElementById('currentview').innerHTML = document.getElementById('browseview').innerHTML;
-    /*attachHandlersBrowseView();*/
-    
-    
-    //browseRefreshWallMessages();
-}
 
 var homeRefreshWallMessages = function(){
     
@@ -169,6 +173,8 @@ var homeRefreshWallMessages = function(){
     while (messagewall.firstChild) {
             messagewall.removeChild(messagewall.firstChild);
     }
+    
+    document.getElementById("homepostmessageerrormsg").innerHTML = wallmessages.message;
     
     wallmessages.data.forEach(function(item){
         var node = document.createElement("DIV");
@@ -187,8 +193,7 @@ var browseRefreshWallMessages = function(){
     var wallmessages = serverstub.getUserMessagesByEmail(localStorage.getItem("logintoken"), email);
     var messagewall = document.getElementById("browsemessagewall");
 
-    console.log("browserefreshwallmessages:"+wallmessages.message);
-
+    document.getElementById("browsepostmessageerrormsg").innerHTML = wallmessages.message;
     
     while (messagewall.firstChild) {
             messagewall.removeChild(messagewall.firstChild);
@@ -225,11 +230,10 @@ var homePostMessageButton = function(){
             message,
             document.getElementById("homeemail").innerHTML
         );
-                            
-        console.log(postresult.message);
-        
         document.getElementById("homepostmessagebox").value="";
         homeRefreshWallMessages();
+        
+        document.getElementById("homepostmessageerrormsg").innerHTML=postresult.message;
     } else {
         document.getElementById("homepostmessageerrormsg").innerHTML="Can't send empty message.";
     }
@@ -244,8 +248,8 @@ var browsePostMessageButton = function(){
             document.getElementById("browsepostmessagebox").value,
             document.getElementById("browseemail").innerHTML
         );
-        console.log(postresult.message);
         
+        document.getElementById("browsepostmessageerrormsg").innerHTML=postresult.messa;g
         document.getElementById("browsepostmessagebox").value="";
         browseRefreshWallMessages();
     } else {
@@ -271,16 +275,12 @@ var browseUserButton = function(){
         browseRefreshWallMessages(userdata.data.email);
         
         document.getElementById("browseusercontent").classList.remove("hidden-content");
-        console.log("Userdata update success");
     } else {
         document.getElementById("browseusercontent").classList.add("hidden-content");
     }
-    
-    console.log(userdata.message);
-
 }
 
-var hometabButton = function(){
+var displayHometab = function(){
     document.getElementById("homecontent").classList.add("active");
     document.getElementById("hometab").classList.add("active");
 
@@ -289,9 +289,11 @@ var hometabButton = function(){
     
     document.getElementById("accountcontent").classList.remove("active");
     document.getElementById("accounttab").classList.remove("active");
+    
+    localStorage.setItem("currenttab", "home");
 };
  
-var browsetabButton = function(){
+var displayBrowsetab = function(){
     document.getElementById("homecontent").classList.remove("active");
     document.getElementById("hometab").classList.remove("active");
     
@@ -300,9 +302,11 @@ var browsetabButton = function(){
     
     document.getElementById("accountcontent").classList.remove("active");
     document.getElementById("accounttab").classList.remove("active");
+    
+    localStorage.setItem("currenttab", "browse");
 };
  
-var accounttabButton = function(){       
+var displayAccounttab = function(){       
     document.getElementById("homecontent").classList.remove("active");
     document.getElementById("hometab").classList.remove("active");
     
@@ -311,4 +315,6 @@ var accounttabButton = function(){
     
     document.getElementById("accountcontent").classList.add("active");
     document.getElementById("accounttab").classList.add("active");
+    
+    localStorage.setItem("currenttab", "account");
 };
