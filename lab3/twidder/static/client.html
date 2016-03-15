@@ -1,0 +1,128 @@
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <link href="static/client.css" type="text/css" rel="stylesheet">
+        <script src="static/client.js" type="text/javascript"></script>
+        <script id="welcomeview" type=”text/view”>
+            <div id="maincontainer">
+                <div id="logo">
+                    <img src="static/wimage.png">
+                </div>
+                <div id="logincontainer">
+        			<form method="POST" action="#" id="loginform">
+        			    <div class="inner">
+        					<div class="row"><label for="email">Email</label><input type="email" id="email" name="email" required></div>
+        					<div class="row"><label for="password">Password</label><input type="password" id="password" name="password" required></div>
+        				</div>
+        				<div class="inner">
+        					<div class="row">
+    				    	    <div class="errormsg" id="loginerrormsg"></div>
+        					    <button type="submit" value="login" name="login" id="loginlogin">Login</button>
+        			        </div>
+        				</div>
+        			</form>
+                </div>
+                <div id="signupcontainer">
+                    <form method="POST" action="#" id="signupform">
+                         <div class="inner">
+                             <div id="signupheader">Sign up here</div>
+                            	<div class="row"><label for="firstname">First name</label><input type="text" id="firstname" name="firstname" required></div>
+        						<div class="row"><label for="familyname">Family name</label><input type="text" id="familyname" name="familyname" required></div>
+                                    <div class="row"><label for="gender">Gender</label>
+                                    <select name="gender">
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select></div>
+                                </div>
+        						<div class="row"><label for="city">City</label><input type="text" id="city" name="city" required></div>
+        						<div class="row"><label for="country">Country</label><input type="text" id="country" name="country" required></div>
+        						<div class="row"><label for="email">Email</label><input type="email" id="email" name="email" required></div>
+        						<div class="row"><label for="password">Password</label><input type="password" id="password" name="password" required></div>
+        						<div class="row"><label for="repeatpassword">Repeat PSW</label><input type="password" id="repeatpassword" name="repeatpassword" required>
+    						</div>
+    						<div class="inner">
+        				    	<div class="row">
+        				    	    <div class="errormsg" id="signuperrormsg"></div>
+        				    	    <button type="submit" value="signup" name="signup" id="signupsignup">Signup</button>
+        				    	</div>
+        			    	</div>
+    				    </div>
+                    </form>
+                </div>
+            </div>
+        </script>
+        <script id="profileview" type=”text/view”> 
+            <div class="tabs">
+                <ul class="tab-links noselect">
+                    <li onclick="displayHometab()" id="hometab" class="active">Home</li>
+                    <li onclick="displayBrowsetab()" id="browsetab">Browse</li>
+                    <li onclick="displayAccounttab()" id="accounttab">Account</li>
+                </ul>
+             
+                <div class="tab-content">
+                    <div id="homecontent" class="tab active">
+                        Email: <div id="homeemail"></div><br>
+                        First name: <div id="homefirstname"></div><br>
+                        Last name: <div id="homefamilyname"></div><br>
+                        Gender: <div id="homegender"></div><br>
+                        City: <div id="homecity"></div><br>
+                        Country: <div id="homecountry"></div>
+                        <hr>
+                        <textarea id="homepostmessagebox" rows="4" cols="50" maxlength="140"></textarea>
+                        <div>
+                            <div class="errormsg" id="homepostmessageerrormsg"></div>
+                            <button id="homepostmessagebutton" onclick="homePostMessageButton()">Post</button>
+                            <button id="homeupdatepage" onclick="homeRefreshWallMessages()" rows="1" cols="40">Refresh</button>
+                        </div>
+                        <hr>
+                        <div id="homemessagewall"></div>
+
+                    </div>
+             
+                    <div id="browsecontent" class="tab">
+                        <input id="browseuserarea"></input>
+                        <button id="browseuserbutton" onclick="browseUserButton()">Browse</button>
+        			    <div class="errormsg" id="browseusererrormsg"></div>
+                        <div class="hidden-content" id="browseusercontent">
+                            <hr>
+                            Email: <div id="browseemail"></div><br>
+                            First name: <div id="browsefirstname"></div><br>
+                            Last name: <div id="browsefamilyname"></div><br>
+                            Gender: <div id="browsegender"></div><br>
+                            City: <div id="browsecity"></div><br>
+                            Country: <div id="browsecountry"></div>
+                            <hr>
+                            <textarea id="browsepostmessagebox" rows="4" cols="50" maxlength="140"></textarea>
+                            <div>
+                                <div class="errormsg" id="browsepostmessageerrormsg"></div>
+                                <button id="browsepostmessagebutton" onclick="browsePostMessageButton()">Post</button>
+                                <button id="browseupdatepage" onclick="browseRefreshWallMessages()" rows="1" cols="40">Refresh</button>
+                            </div>
+                            <hr>
+                            <div id="browsemessagewall"></div>
+                        </div>
+                    </div>
+             
+                    <div id="accountcontent" class="tab">
+                            <form method="POST" action="#" id="changepasswordform">
+                                <div class="inner">
+                                    <div id="changepasswordheader">Change password</div>
+                                    <div class="row"><label for="oldpassword">Old password</label><input type="password" id="oldpassword" name="oldpassword" required></div>
+            				        <div class="row"><label for="newpassword">New password</label><input type="password" id="newpassword" name="newpassword" required></div>
+            				        <div class="row"><label for="repeatnewpassword">Repeat new password</label><input type="password" id="repeatnewpassword" name="repeatnewpassword" required></div>
+        				        </div>
+        				       <div class="errormsg" id="changepassworderrormsg"></div>
+
+        				        <button type="submit" value="changepassword" name="changepassword" id="changepasswordchangepassword">Change password</button>
+                            </form>
+                        <button onclick="logoutButton()" type="button" id="logout">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </script>
+    </head>
+    <body>
+        <div id="currentview"></div>
+    </body>
+</html>

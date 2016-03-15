@@ -1,0 +1,32 @@
+/
+/dbreset
+/helper_test
+/get_gender
+
+/sign_in/<email>/<password>
+	https://tddd97-labs-lordbamse.c9users.io/sign_in/admin@admin0/admin6
+
+/sign_up/<email>/<password>/<firstname>/<familyname>/<gender>/<city>/<country>
+	https://tddd97-labs-lordbamse.c9users.io/sign_up/mail@a/passpass/a_firstname/a_familyname/other/a_city/a_country
+
+/sign_out/<token>
+	https://tddd97-labs-lordbamse.c9users.io/sign_out/
+
+/change_password/<token>/<oldpass>/<newpass>
+	https://tddd97-labs-lordbamse.c9users.io/sign_in/mail@a/passpass
+	https://tddd97-labs-lordbamse.c9users.io/change_password//passpass/sappsapp
+
+/get_user_data_by_email/<token>/<email>
+	https://tddd97-labs-lordbamse.c9users.io/get_user_data_by_email//admin@admin0
+
+/get_user_data_by_token/token
+	https://tddd97-labs-lordbamse.c9users.io/get_user_data_by_token/
+
+/get_user_messages_by_email/<token>/<email>
+	https://tddd97-labs-lordbamse.c9users.io/get_user_messages_by_email//admin@admin0
+
+/get_user_messages_by_token/<token>
+	https://tddd97-labs-lordbamse.c9users.io/get_user_messages_by_token/
+
+/post_message/<token>/<message>/<email>
+	https://tddd97-labs-lordbamse.c9users.io/post_message//ett%20meddelande/mail@a

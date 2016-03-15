@@ -37,29 +37,27 @@ var attachHandlersProfileView = function(){
 var loginForm = {
     
     login: function(formData) {
-        var email = formData.email.value.trim();
-        var password = formData.password.value.trim();
+        var email = formData.email.value;
+        var password = formData.password.value;
         var loginresult = serverstub.signIn(email,password);
-        console.log(loginresult.success);
+        console.log(loginresult.message);
         
         if(loginresult.success) {
-            console.log('loginForm: Successful login');
 //            document.getElementById("loginerrormsg").innerHTML = loginresult.message.value; //Placeholder
             localStorage.setItem("logintoken", loginresult.data);
             setCurrentView();
         } else {
-            console.log('loginForm: Login error');
             formData.password.value = "";
             document.getElementById("loginerrormsg").innerHTML = loginresult.message;
         }
     }
 };
 
-var signupForm = {
+var signupForm ={ 
      
     signup: function(formData){
-        var password = formData.password.value.trim();
-        var repeatpassword = formData.repeatpassword.value.trim();
+        var password = formData.password.value;
+        var repeatpassword = formData.repeatpassword.value
         var user = {
             'email': formData.email.value,
             'password': formData.password.value,
@@ -75,29 +73,42 @@ var signupForm = {
             formData.password.value = "";
             formData.repeatpassword.value = "";
             
-            document.getElementById("signuperrormsg").innerHTML = "Password mismatch.";
+            document.getElementById("signuperrormsg").innerHTML = "Passwords do not match.";
+        } else if (password.length < 8) {
+            formData.password.value = "";
+            formData.repeatpassword.value = "";
+            
+            document.gteElementById("signuperrormsg").innerHTML = "Password must be at least 8 characters long.";
         } else {
             var signupresult = serverstub.signUp(user);
             console.log('signupForm: signup info sent');
             document.getElementById("signuperrormsg").innerHTML = signupresult.message;
+            formData.reset();
         }
-        formData.reset();
     }
 };
 
 var changePasswordForm = {
     
     changePassword: function(formData){
-        var newpassword = formData.newpassword;
-        var repeatnewpassword = formData.repeatnewpassword;
+        var newpassword = formData.newpassword.value;
+        var repeatnewpassword = formData.repeatnewpassword.value;
         
-        if (newpassword != repeatnewpassword) {
+        if (newpassword.length < 8) {
             formData.newpassword = "";
             formData.repeatnewpassword = "";
+            document.getElementById("changepassworderrormsg").innerHTML = "The new password is too short";
+        } else if(newpassword != repeatnewpassword){
+            formData.newpassword = "";
+            formData.repeatnewpassword = "";
+            document.getElementById("changepassworderrormsg").innerHTML = "Passwords do not match";
         } else {
             var changepasswordresult = serverstub.changePassword(localStorage.getItem("logintoken"),
-                                                                formData.oldpassword,
+                                                                formData.oldpassword.value,
                                                                 newpassword);
+            document.getElementById("changepassworderrormsg").innerHTML = changepasswordresult.message;
+            formData.newpassword = "";
+            formData.repeatnewpassword = "";                
         }
     }
 };
@@ -107,7 +118,7 @@ displayView = function(){
 };
 
 var init = function(){
-    console.log('initializing');
+    console.log('Initializing page');
     setCurrentView();   
 
 };
@@ -138,46 +149,64 @@ var initProfileView = function(){
     document.getElementById("homecountry").innerHTML=userdata.country;
     
     homeRefreshWallMessages();
+    
+    var current_tab = localStorage.getItem("currenttab");
+    
+    if (current_tab == "home") {
+        console.log("Refresh: Loading home");
+        displayHometab();
+    } else if (current_tab == "browse") {
+        displayBrowsetab();
+        console.log("Refresh: Loading browse");
+    } else if (current_tab == "account"){
+        displayAccounttab();
+        console.log("Refresh: Loading account");
+    }
 }
 
-var initBrowseView = function(){
-    document.getElementById('currentview').innerHTML = document.getElementById('browseview').innerHTML;
-    /*attachHandlersBrowseView();*/
-    
-    
-    //browseRefreshWallMessages();
-}
 
 var homeRefreshWallMessages = function(){
     
-    var wallmessages = serverstub.getUserMessagesByToken(localStorage.getItem("logintoken")).data;
+    var wallmessages = serverstub.getUserMessagesByToken(localStorage.getItem("logintoken"));
     var messagewall = document.getElementById("homemessagewall");
-
-    wallmessages.forEach(function(item){
+    
+    while (messagewall.firstChild) {
+            messagewall.removeChild(messagewall.firstChild);
+    }
+    
+    document.getElementById("homepostmessageerrormsg").innerHTML = wallmessages.message;
+    
+    wallmessages.data.forEach(function(item){
         var node = document.createElement("DIV");
         node.appendChild(document.createElement("BR"));
         node.appendChild(document.createTextNode(item.writer));
         node.appendChild(document.createElement("BR"));
         node.appendChild(document.createTextNode(item.content));
         node.appendChild(document.createElement("BR"));
-
+        
         messagewall.appendChild(node);
     });
 }
 
-var browseRefreshWallMessages = function(email){
-    
-    var wallmessages = serverstub.getUserMessagesByEmail(localStorage.getItem("logintoken"), email).data;
+var browseRefreshWallMessages = function(){
+    var email = document.getElementById("browseuserarea").value;
+    var wallmessages = serverstub.getUserMessagesByEmail(localStorage.getItem("logintoken"), email);
     var messagewall = document.getElementById("browsemessagewall");
 
-    wallmessages.forEach(function(item){
+    document.getElementById("browsepostmessageerrormsg").innerHTML = wallmessages.message;
+    
+    while (messagewall.firstChild) {
+            messagewall.removeChild(messagewall.firstChild);
+    }
+    
+    wallmessages.data.forEach(function(item){
         var node = document.createElement("DIV");
         node.appendChild(document.createElement("BR"));
         node.appendChild(document.createTextNode(item.writer));
         node.appendChild(document.createElement("BR"));
         node.appendChild(document.createTextNode(item.content));
         node.appendChild(document.createElement("BR"));
-
+        
         messagewall.appendChild(node);
     });
 }
@@ -194,43 +223,64 @@ var logoutButton = function(){
 };
 
 var homePostMessageButton = function(){
-    var postresult = serverstub.postMessage(localStorage.getItem("logintoken"),
-        document.getElementById("homepostmessagebox").value,
-        document.getElementById("homeemail").innerHTML
-    );
-    console.log(postresult.message);
-    
-    document.getElementById("homepostmessagebox").value="";
-    homeRefreshWallMessages();
+    var message = document.getElementById("homepostmessagebox").value;
+    if(message){
+        var postresult = serverstub.postMessage(
+            localStorage.getItem("logintoken"),
+            message,
+            document.getElementById("homeemail").innerHTML
+        );
+        document.getElementById("homepostmessagebox").value="";
+        homeRefreshWallMessages();
+        
+        document.getElementById("homepostmessageerrormsg").innerHTML=postresult.message;
+    } else {
+        document.getElementById("homepostmessageerrormsg").innerHTML="Can't send empty message.";
+    }
+
 }
 
 var browsePostMessageButton = function(){
-    var postresult = serverstub.postMessage(localStorage.getItem("logintoken"),
-        document.getElementById("browsepostmessagebox").value,
-        document.getElementById("browseemail").innerHTML
-    );
-    console.log(postresult.message);
-    
-    document.getElementById("browsepostmessagebox").value="";
-    browseRefreshWallMessages();
+    var message = document.getElementById("browsepostmessagebox").value;
+    if(message){
+        var postresult = serverstub.postMessage(
+            localStorage.getItem("logintoken"),
+            document.getElementById("browsepostmessagebox").value,
+            document.getElementById("browseemail").innerHTML
+        );
+        
+        document.getElementById("browsepostmessageerrormsg").innerHTML=postresult.messa;g
+        document.getElementById("browsepostmessagebox").value="";
+        browseRefreshWallMessages();
+    } else {
+        document.getElementById("browsepostmessageerrormsg").innerHTML="Can't send empty message.";
+    }
 }
     
     
 var browseUserButton = function(){
     var userdata = serverstub.getUserDataByEmail(localStorage.getItem("logintoken"),
                                                 document.getElementById('browseuserarea').value);
-    console.log(userdata.message);
-    document.getElementById("browseemail").innerHTML=userdata.data.email;
-    document.getElementById("browsefirstname").innerHTML=userdata.data.firstname;
-    document.getElementById("browsefamilyname").innerHTML=userdata.data.familyname;
-    document.getElementById("browsegender").innerHTML=userdata.data.gender;
-    document.getElementById("browsecity").innerHTML=userdata.data.city;
-    document.getElementById("browsecountry").innerHTML=userdata.data.country;
     
-    browseRefreshWallMessages(userdata.data.email);
+    document.getElementById("browseusererrormsg").innerHTML = userdata.message;
+    
+    if (userdata.success) {
+        document.getElementById("browseemail").innerHTML=userdata.data.email;
+        document.getElementById("browsefirstname").innerHTML=userdata.data.firstname;
+        document.getElementById("browsefamilyname").innerHTML=userdata.data.familyname;
+        document.getElementById("browsegender").innerHTML=userdata.data.gender;
+        document.getElementById("browsecity").innerHTML=userdata.data.city;
+        document.getElementById("browsecountry").innerHTML=userdata.data.country;
+
+        browseRefreshWallMessages(userdata.data.email);
+        
+        document.getElementById("browseusercontent").classList.remove("hidden-content");
+    } else {
+        document.getElementById("browseusercontent").classList.add("hidden-content");
+    }
 }
 
-var hometabButton = function(){
+var displayHometab = function(){
     document.getElementById("homecontent").classList.add("active");
     document.getElementById("hometab").classList.add("active");
 
@@ -239,9 +289,11 @@ var hometabButton = function(){
     
     document.getElementById("accountcontent").classList.remove("active");
     document.getElementById("accounttab").classList.remove("active");
+    
+    localStorage.setItem("currenttab", "home");
 };
  
-var browsetabButton = function(){
+var displayBrowsetab = function(){
     document.getElementById("homecontent").classList.remove("active");
     document.getElementById("hometab").classList.remove("active");
     
@@ -250,9 +302,11 @@ var browsetabButton = function(){
     
     document.getElementById("accountcontent").classList.remove("active");
     document.getElementById("accounttab").classList.remove("active");
+    
+    localStorage.setItem("currenttab", "browse");
 };
  
-var accounttabButton = function(){       
+var displayAccounttab = function(){       
     document.getElementById("homecontent").classList.remove("active");
     document.getElementById("hometab").classList.remove("active");
     
@@ -261,4 +315,6 @@ var accounttabButton = function(){
     
     document.getElementById("accountcontent").classList.add("active");
     document.getElementById("accounttab").classList.add("active");
+    
+    localStorage.setItem("currenttab", "account");
 };
