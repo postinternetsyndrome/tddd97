@@ -65,8 +65,8 @@ var loginForm = {
                         console.log(socket_received.message);
 
                         if (socket_received.messagetype == "forcedLogout") {
-                            localStorage.removeItem("logintoken")
-                            localStorage.removeItem("currenttab")
+                            localStorage.removeItem("logintoken");
+                            localStorage.removeItem("currenttab");
                             setCurrentView();
                         } else if (socket_received.messagetype == "dataUpdate_usercount") {
                             currentLoggedInUsers = socket_received.data.current;
@@ -104,8 +104,8 @@ var loginForm = {
                 }
             }
         };
-        xhttp.open("GET", "sign_in/"+email+"/"+password, true);
-        xhttp.send();
+        xhttp.open("POST", "/sign_in", true);
+        xhttp.send(new FormData(formData));
     }
 };
 
@@ -139,15 +139,8 @@ var signupForm ={
                     formData.reset();
                 }
             };
-            xhttp.open('GET', 'sign_up/'+formData.email.value+'/'+
-                password+'/'+
-                formData.firstname.value+'/'+
-                formData.familyname.value+'/'+
-                formData.gender.value+'/'+
-                formData.city.value+'/'+
-                formData.country.value,
-                true);
-            xhttp.send();
+            xhttp.open("POST", "/sign_up", true);
+            xhttp.send(new FormData(formData));
         }
     }
 };
@@ -170,8 +163,10 @@ var changePasswordForm = {
                     document.getElementById("changepassworderrormsg").innerHTML = JSON.parse(xhttp.responseText).message;
                 }
             };
-            xhttp.open("GET", "/change_password/" + localStorage.getItem("logintoken") + "/" + formData.oldpassword.value + "/" + newpassword, true);
-            xhttp.send();
+            xhttp.open("POST", "/change_password", true);
+            form = new FormData(formData);
+            form.append("token", localStorage.getItem("logintoken"));
+            xhttp.send(form);
         }
         formData.oldpassword.value = "";
         formData.newpassword.value = "";
@@ -204,8 +199,10 @@ var setCurrentView = function(){
                 }
             }
         };
-        xhttp.open("GET", "/get_login_status/" + localStorage.getItem("logintoken"), true);
-        xhttp.send();
+        xhttp.open("POST", "/get_login_status", true);
+        form = new FormData();
+        form.append("token", localStorage.getItem("logintoken"));
+        xhttp.send(form);
     }
 };
 
@@ -264,12 +261,16 @@ var initProfileView = function(){
                     }
                 }
             };
-            xhttp_graph.open("GET", "/get_graph_data/" + localStorage.getItem("logintoken"), true);
-            xhttp_graph.send();
+            xhttp_graph.open("POST", "/get_graph_data", true);
+            form = new FormData();
+            form.append("token", localStorage.getItem("logintoken"));
+            xhttp_graph.send(form);
         }
     };
-    xhttp.open("GET", "/get_user_data_by_token/" + localStorage.getItem("logintoken"), true);
-    xhttp.send();
+    xhttp.open("POST", "/get_user_data_by_token", true);
+    form = new FormData();
+    form.append("token", localStorage.getItem("logintoken"));
+    xhttp.send(form);
 };
 
 
@@ -306,8 +307,10 @@ var homeRefreshWallMessages = function(){
             }
         }
     };
-    xhttp.open("GET", "/get_user_messages_by_token/" + localStorage.getItem("logintoken"), true);
-    xhttp.send();
+    xhttp.open("POST", "/get_user_messages_by_token", true);
+    form = new FormData();
+    form.append("token", localStorage.getItem("logintoken"));
+    xhttp.send(form);
 };
 
 var browseRefreshWallMessages = function(){
@@ -345,8 +348,12 @@ var browseRefreshWallMessages = function(){
                 }
             }
         };
-        xhttp.open("GET", "/get_user_messages_by_email/" + localStorage.getItem("logintoken") +"/"+email, true);
-        xhttp.send();
+        xhttp.open("POST", "/get_user_messages_by_email", true);
+        form = new FormData();
+        form.append("token", localStorage.getItem("logintoken"));
+        form.append("email", email);
+        xhttp.send(form);
+
     }
 };
 
@@ -366,8 +373,11 @@ var logoutButton = function(){
             setCurrentView();
         }
     };
-    xhttp.open("GET", "sign_out/" + localStorage.getItem("logintoken"), true);
-    xhttp.send();    
+    xhttp.open("POST", "sign_out", true);
+    form = new FormData();
+    form.append("token", localStorage.getItem("logintoken"));
+    xhttp.send(form);    
+    
     if(ws != null) {
         ws.close;
         ws = null;
@@ -389,12 +399,14 @@ var homePostMessageButton = function(){
             document.getElementById("homepostmessageerrormsg").innerHTML=postresult.message;
         }
     };
-    xhttp.open('GET', 'post_message/'+localStorage.getItem("logintoken")+'/'+
-        message+'/'+
-        document.getElementById("homeemail").innerHTML,
-        true);
-    xhttp.send();
-
+    
+    xhttp.open('POST', "post_message",  true);
+    form = new FormData();
+    form.append("token", localStorage.getItem("logintoken"));
+    form.append("message", message);
+    form.append("email", document.getElementById("homeemail").innerHTML);
+    xhttp.send(form);
+    
     } else {
         document.getElementById("homepostmessageerrormsg").innerHTML="Can't send empty message.";
     }
@@ -416,11 +428,13 @@ var browsePostMessageButton = function(){
             document.getElementById("browsepostmessageerrormsg").innerHTML=postresult.message;
         }
     };
-    xhttp.open('GET', 'post_message/'+localStorage.getItem("logintoken")+'/'+
-        message+'/'+
-        document.getElementById("browseemail").innerHTML,
-        true);
-    xhttp.send();
+
+    xhttp.open('POST', "post_message",  true);
+    form = new FormData();
+    form.append("token", localStorage.getItem("logintoken"));
+    form.append("message", message);
+    form.append("email", document.getElementById("browseemail").innerHTML);
+    xhttp.send(form);
         
     } else {
         document.getElementById("browsepostmessageerrormsg").innerHTML="Can't send empty message.";
@@ -456,8 +470,11 @@ var browseUserButton = function(){
                 }
             }
         };
-        xhttp.open("GET", "/get_user_data_by_email/" + localStorage.getItem("logintoken") + "/" + email, true);
-        xhttp.send();        
+        xhttp.open("POST", "/get_user_data_by_email", true);
+        form = new FormData();
+        form.append("token", localStorage.getItem("logintoken"));
+        form.append("email", email);
+        xhttp.send(form);        
     }
 };
 

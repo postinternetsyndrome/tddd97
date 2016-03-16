@@ -8,13 +8,10 @@ import database_helper
 from flask import Flask, request, g
 from gevent.wsgi import WSGIServer
 from geventwebsocket.handler import WebSocketHandler
-#from gevent.coros import Semaphore
 
 app = Flask(__name__)
 app.debug = True
 websockets = {}
-#recent_messages_entries = 24
-#recent_messages_resolution = 60 * 60
 recent_messages_entries = 60
 recent_messages_resolution = 60
 recent_messages_timewindow = recent_messages_entries * recent_messages_resolution
@@ -49,8 +46,10 @@ def initialization():
     print "Active users was not purged"
     return False
 
-@app.route('/sign_in/<email>/<password>')    
-def sign_in(email, password):
+@app.route('/sign_in', methods = ['POST'])    
+def sign_in():
+    email = request.form["email"]
+    password = request.form["password"]
     if '@' in email :
         userdata = database_helper.get_user_by_email(email)
         if userdata != None and userdata[6] == password :
@@ -75,14 +74,22 @@ def sign_in(email, password):
     return json.dumps({"success": False, "message": "Wrong username or password."})
 
     
-@app.route('/sign_up/<email>/<password>/<firstname>/<familyname>/<gender>/<city>/<country>')
-def sign_up(email, password, firstname, familyname, gender, city, country):
+@app.route('/sign_up', methods = ['POST'])
+def sign_up():
+    email = request.form["email"]
+    password = request.form["password"]
+    firstname = request.form["firstname"]
+    familyname = request.form["familyname"]
+    gender = request.form["gender"]
+    city = request.form["city"]
+    country = request.form["country"]
+    
     if '@' in email and len(password) > 7 and firstname and familyname and gender and city and country :
         if database_helper.get_user_by_email(email) == None :
             print "ENTERED SIGN_IF_STATEMENT"
             success = database_helper.add_user(email, password, firstname, familyname, gender, city, country)
         else :
-            return json.dumps ({"success": False, "message": "User already exist."})           
+            return json.dumps ({"success": False, "message": "User already exists."})           
     else : 
         print "email:'"+email+"' password:'"+password+"' firstname:'"+firstname+"' familyname:'"+familyname+"' gender:'"+gender+"' city:'"+city+"' country:'"+country
 
@@ -94,8 +101,9 @@ def sign_up(email, password, firstname, familyname, gender, city, country):
     return json.dumps({"success": True, "message": "Successfully created a new user."})
 
 
-@app.route('/sign_out/<token>')
-def sign_out(token):
+@app.route('/sign_out', methods = ['POST'])
+def sign_out():
+    token = request.form["token"]
     email = database_helper.get_active(token)
     ret = database_helper.remove_active(token)
     
@@ -109,8 +117,11 @@ def sign_out(token):
         return json.dumps ({"success": False, "message": "You are not signed in."})
 
 
-@app.route('/change_password/<token>/<oldpass>/<newpass>')
-def change_password(token, oldpass, newpass):
+@app.route('/change_password', methods = ['POST'])
+def change_password():
+    token = request.form["token"]
+    oldpass = request.form["oldpassword"]
+    newpass = request.form["newpassword"]
     
     email = database_helper.get_active(token)
     print email
@@ -127,9 +138,7 @@ def change_password(token, oldpass, newpass):
     else :
         return json.dumps({"success": False, "message": "Password change failed."})
 
-
-@app.route('/get_user_data_by_email/<token>/<email>')
-def get_user_data_by_email(token, email):
+def get_user_data_helper(token, email):
     userdata = database_helper.get_user_by_email(email)
         
     if database_helper.get_active(token) == None :
@@ -152,29 +161,33 @@ def get_user_data_by_email(token, email):
                 "country": userdata[5]}
         return json.dumps({"success": True, "message": "User data retrieved.", "data": data})
         
-@app.route('/get_user_data_by_token/<token>')
-def get_user_data_by_token(token):
+@app.route('/get_user_data_by_email', methods = ['POST'])
+def get_user_data_by_email():
+    return get_user_data_helper(request.form["token"], request.form["email"])
+        
+@app.route('/get_user_data_by_token', methods = ['POST'])
+def get_user_data_by_token():
+    token = request.form["token"]
     email = database_helper.get_active(token)
     if email != None :
-        return get_user_data_by_email(token, email)
+        return get_user_data_helper(token, email)
     else :
         return json.dumps({"success": False, "message": "You are not signed in."});
 
-@app.route('/get_login_status/<token>')
-def get_login_status(token):
+@app.route('/get_login_status', methods = ['POST'])
+def get_login_status():
+    token = request.form["token"]
     email = database_helper.get_active(token)
     if email == None :
         return json.dumps({"success": False, "message": "You are not signed in."})
     return json.dumps({"success": True, "message": "You are signed in."})
 
-
-@app.route('/get_user_messages_by_email/<token>/<email>')
-def get_user_messages_by_email(token, email) :
+def get_user_messages_helper(token, email):
     if database_helper.get_active(token) == None :
         return json.dumps({"success": False, "message" : "You are not signed in."})
     if database_helper.get_user_by_email(email) == None :
         return json.dumps({"success": False, "message" : "No such user."})
-
+    
     messages = database_helper.get_messages(email)
     
     message_list = []
@@ -183,17 +196,23 @@ def get_user_messages_by_email(token, email) :
         message_list.append(json_message)
     return json.dumps({"success": True, "message" : "User messages retrieved", "data" : message_list})
 
-
-@app.route('/get_user_messages_by_token/<token>')
-def get_user_messages_by_token(token) :
+@app.route('/get_user_messages_by_email', methods = ['POST'])
+def get_user_messages_by_email() :
+    return get_user_messages_helper(request.form["token"], request.form["email"])
+    
+@app.route('/get_user_messages_by_token', methods = ['POST'])
+def get_user_messages_by_token() :
+    token = request.form["token"]
     email = database_helper.get_active(token)
     if email == None :
         return json.dumps({"success": False, "message": "You are not signed in."})
-    return get_user_messages_by_email(token, email)
-    
-    
-@app.route('/post_message/<token>/<message>/<email>')
-def post_message(token, message, email):
+    return get_user_messages_helper(token, email)
+
+@app.route('/post_message', methods = ['POST'])
+def post_message():
+    token = request.form["token"]
+    message = request.form["message"]
+    email = request.form["email"]
     sender = database_helper.get_active(token)
     if sender == None :
         return json.dumps({"success": False, "message": "You are not signed in."})
@@ -221,15 +240,15 @@ def websocket(token):
             del websockets[email]
     return "websocket(): done"
 
-@app.route('/get_graph_data/<token>')
-def get_graph_data(token):
+@app.route('/get_graph_data', methods = ['POST'])
+def get_graph_data():
+    token = request.form["token"]
     email = database_helper.get_user_by_token(token)[0]
     num_users = database_helper.get_number_of_active()
     total_users = database_helper.get_number_of_users()
     user_visits = database_helper.get_user_visits_by_email(email)
     total_visits = database_helper.get_total_visits()
     total_messages = database_helper.get_message_count(email)
-    #recent_messages = database_helper.get_recent_messages(email, recent_messages_timewindow)
     recent_count = [0 for x in range(recent_messages_entries)]
     
     for item in database_helper.get_recent_messages(email, recent_messages_timewindow):
@@ -275,8 +294,6 @@ def update_message_count(email):
         message_update = {"messagecount": message_count, "recent": recent_count}
         if not ws["websocket"].closed :
             ws["websocket"].send(json.dumps({"messagetype": "dataUpdate_messagecount", "message": "Message count data updated.", "data": message_update}))
-    
-    
 
 http_server = WSGIServer(('', 8080), app, handler_class=WebSocketHandler)
 http_server.serve_forever()
