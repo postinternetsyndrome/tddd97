@@ -1,5 +1,9 @@
 var currentLoggedInUsers = 0
 var currentTotalUsers = 0
+var currentVisitsToMyProfile = 0;
+var currentTotalVisitsToProfiles = 0;
+var currentMessageCount = 0;
+var currentRecentMessagesCount = [];
 
 var attachHandlersWelcomeView = function(){
     
@@ -37,6 +41,8 @@ var attachHandlersProfileView = function(){
     }
 };
 
+var ws = null
+
 var loginForm = {
     login: function(formData) {
 
@@ -53,7 +59,7 @@ var loginForm = {
                 console.log(loginresult.message);
                 
                 if(loginresult.success) {
-                    var ws = new WebSocket("ws://tddd97-labs-lordbamse.c9users.io/websocket/" + loginresult.data);
+                    ws = new WebSocket("ws://tddd97-labs-lordbamse.c9users.io/websocket/" + loginresult.data);
                     ws.onmessage = function (event) {
                         var socket_received = JSON.parse(event.data);
                         console.log(socket_received.message);
@@ -67,21 +73,30 @@ var loginForm = {
                             currentTotalUsers = socket_received.data.total;
                             console.log("Update from server: currentLoggedInUsers = " + currentLoggedInUsers);
                             console.log("Update from server: currentTotalUsers = " + currentTotalUsers);
-                            renderGraph(window.d3);
-                        } else if (socket_received.messagetype == "dataUpdate_postcount") {
-                            var postcount = socket_received.data
+                            renderLoggedInGraph();
                         } else if (socket_received.messagetype == "dataUpdate_visitcount") {
-                            var visitcount = socket_received.data
+                            currentVisitsToMyProfile = socket_received.data.user;
+                            currentTotalVisitsToProfiles = socket_received.data.total;
+                            console.log("Update from server: currentVisitsToMyProfile = " + currentVisitsToMyProfile);
+                            console.log("Update from server: currentTotalVisitsToProfiles = " + currentTotalVisitsToProfiles);
+                            renderVisitsGraph();
+                        } else if (socket_received.messagetype == "dataUpdate_messagecount") {
+                            currentMessageCount = socket_received.data.messagecount;
+                            currentRecentMessagesCount = socket_received.data.recent;
+                            console.log("Update from server: currentMessageCount = " + currentMessageCount);
+                            console.log("Update from server: currentRecentMessagesCount = " + currentRecentMessagesCount);
+                            renderMessagesGraph();
                         }
                     };
                     
                     window.onbeforeunload = function() {
-                        ws.onclose = function () {}; // disable onclose handler first
-                        ws.close();
+                        if (ws) {
+                            ws.onclose = function () {}; // disable onclose handler first
+                            ws.close();    
+                        }
                     };
 
                     localStorage.setItem("logintoken", loginresult.data);
-                    //renderGraph(window.d3);
                     setCurrentView();
                 } else {
                     formData.password.value = "";
@@ -239,16 +254,18 @@ var initProfileView = function(){
                 if (xhttp_graph.readyState == 4 && xhttp_graph.status == 200) {
                     response = JSON.parse(xhttp_graph.responseText)
                     if (response.success) {
-                        currentLoggedInUsers = response.data.current;
-                        currentTotalUsers = response.data.total;
-                        renderGraph(window.d3);
+                        currentLoggedInUsers = response.data.users.current;
+                        currentTotalUsers = response.data.users.total;
+                        currentVisitsToMyProfile = response.data.visits.user;
+                        currentTotalVisitsToProfiles = response.data.visits.total;
+                        currentMessageCount = response.data.messages.messagecount;
+                        currentRecentMessagesCount = response.data.messages.recent;
+                        renderGraphs();
                     }
                 }
             };
             xhttp_graph.open("GET", "/get_graph_data/" + localStorage.getItem("logintoken"), true);
             xhttp_graph.send();
-
-            //renderGraph(window.d3);
         }
     };
     xhttp.open("GET", "/get_user_data_by_token/" + localStorage.getItem("logintoken"), true);
@@ -351,6 +368,10 @@ var logoutButton = function(){
     };
     xhttp.open("GET", "sign_out/" + localStorage.getItem("logintoken"), true);
     xhttp.send();    
+    if(ws != null) {
+        ws.close;
+        ws = null;
+    }
 };
 
 var homePostMessageButton = function(){
@@ -451,8 +472,6 @@ var displayHometab = function(){
     document.getElementById("accounttab").classList.remove("active");
     
     localStorage.setItem("currenttab", "home");
-    //updateGraph();
-    //renderGraph(window.d3);
     homeRefreshWallMessages();
 };
  

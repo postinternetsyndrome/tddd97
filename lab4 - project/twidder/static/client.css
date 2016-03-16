@@ -67,6 +67,19 @@
     width: 100%;
 }
 
+#homedata div{
+    position:absolute;
+    display:inline;
+}
+
+#homegraph{
+    position: absolute;
+    top: 75px;
+    right: 150px;
+    
+    text-align: center;
+}
+
 #browseuserbutton, #accountcontent button, #browsecontent input{
     float: none;
 }
@@ -75,6 +88,7 @@
     float: right;
 }
 
+
 /************/
 /* ELEMENTS */
 /************/
@@ -82,7 +96,6 @@
 button{
 	margin-right: 10px;
 	float: right;
-/*	width: 60px;*/
 	height: 25px;
 }
 
@@ -106,11 +119,6 @@ label{
 
 body{
     background-color: #6797CD;
-}
-
-/* Special override stuff */
-html{
-    /*font-family:times-new-roman !important;*/
 }
 
 /***********/
@@ -223,3 +231,17 @@ legend
     white-space:normal;
     *margin-left:-7px
 } /* COPY THIS? */
+
+/*Line Graph*/
+#messagesgraph path { 
+    stroke: #FF9900;
+    stroke-width: 2;
+    fill: none;
+}
+
+.axis line, .axis path{
+    fill: none;
+    stroke: #FFCC00;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}

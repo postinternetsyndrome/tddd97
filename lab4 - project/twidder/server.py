@@ -8,11 +8,16 @@ import database_helper
 from flask import Flask, request, g
 from gevent.wsgi import WSGIServer
 from geventwebsocket.handler import WebSocketHandler
-from gevent.coros import Semaphore
+#from gevent.coros import Semaphore
 
 app = Flask(__name__)
 app.debug = True
 websockets = {}
+#recent_messages_entries = 24
+#recent_messages_resolution = 60 * 60
+recent_messages_entries = 60
+recent_messages_resolution = 60
+recent_messages_timewindow = recent_messages_entries * recent_messages_resolution
 
 # DEBUG AND TESTING
 
@@ -36,6 +41,14 @@ def getgender():
   
 # ACTUAL STUFF
 
+@app.before_first_request
+def initialization():
+    if database_helper.purge_active_users():
+        print "Active users purged"
+        return True
+    print "Active users was not purged"
+    return False
+
 @app.route('/sign_in/<email>/<password>')    
 def sign_in(email, password):
     if '@' in email :
@@ -43,11 +56,11 @@ def sign_in(email, password):
         if userdata != None and userdata[6] == password :
             ws = websockets.get(email, None)
             if ws != None :
-                ws["websocket"].send(json.dumps({"messagetype": "forcedLogout", "message": "Forced logout: User signed in from other location."}))
+                if not ws["websocket"].closed :
+                    ws["websocket"].send(json.dumps({"messagetype": "forcedLogout", "message": "Forced logout: User signed in from other location."}))
+                    websockets[email]['websocket'].close(1000, "Another user logged in")
                 database_helper.remove_active(database_helper.get_active_by_email(email))
-                print "sign_in(): releasing sema for [" + email + "]"
-                ws["sema"].release()
-                del websockets[email]
+                #del websockets[email]
                 
             if database_helper.get_active_by_email(email) != None :
                 database_helper.remove_active_by_email(email)
@@ -57,7 +70,7 @@ def sign_in(email, password):
             success = database_helper.add_active(token, email)
             print "sign_in(): database_helper.add_active(token, email) = " + str(success)
             if success == True :
-                # update_user_count()
+                update_user_count()
                 return json.dumps({"success": True, "message": "Successfully signed in.", "data": token})
     return json.dumps({"success": False, "message": "Wrong username or password."})
 
@@ -88,9 +101,7 @@ def sign_out(token):
     
     if email != None :
         if websockets.get(email, None) != None :
-            print "sign_out(): releasing sema for [" + email + "]"
-            websockets[email]['sema'].release()
-#            del websockets[email]
+            websockets[email]['websocket'].close(1000, "You've signed out")
         if ret :
             update_user_count()
             return json.dumps ({"success": True, "message": "Successfully signed out."})
@@ -127,6 +138,11 @@ def get_user_data_by_email(token, email):
     if userdata == None :
         return json.dumps({"success": False, "message": "No such user."})
     else :
+        if database_helper.increment_user_visits(email) :
+            print "get_user_data_by_email(): increment_user_visits() succeeded"
+        else:
+            print "get_user_data_by_email(): increment_user_visits() failed"
+        update_visit_count()
         data = {
                 "email": userdata[0],
                 "firstname": userdata[1],
@@ -150,7 +166,6 @@ def get_login_status(token):
     if email == None :
         return json.dumps({"success": False, "message": "You are not signed in."})
     return json.dumps({"success": True, "message": "You are signed in."})
-
 
 
 @app.route('/get_user_messages_by_email/<token>/<email>')
@@ -189,6 +204,7 @@ def post_message(token, message, email):
     success = database_helper.add_message(email, sender, post_time, message)
     
     if success == True :
+        update_message_count(email)
         return json.dumps({"success": True, "message": "Message posted."})
     return json.dumps({"success": False, "message": "Failed to post message."})
 
@@ -196,27 +212,35 @@ def post_message(token, message, email):
 def websocket(token):
     if request.environ.get('wsgi.websocket'):
         email = database_helper.get_active(token)
-        if (email == None) :
-            pass
-#            return json.dumps({"success": False, "message": "Your are not signed in."})
-        else :
-            websocket = request.environ['wsgi.websocket']
-            sema = Semaphore(0)
-            websockets[email] = {"websocket": websocket, "sema": sema}
+        if (email != None) :
+            ws = request.environ['wsgi.websocket']
+            websockets[email] = {"websocket": ws, "sema": None}
             update_user_count()
-            print "websocket(): waiting at sema for [" + email + "]"
-            sema.acquire()
-            del websocket[email]
-            print "websocket(): sema for [" + email + "] passed"
-#            return json.dumps({"success": True, "message": "Websocket connected."})
+            while ws.receive() != None :
+               pass
+            del websockets[email]
     return "websocket(): done"
 
 @app.route('/get_graph_data/<token>')
 def get_graph_data(token):
+    email = database_helper.get_user_by_token(token)[0]
     num_users = database_helper.get_number_of_active()
     total_users = database_helper.get_number_of_users()
+    user_visits = database_helper.get_user_visits_by_email(email)
+    total_visits = database_helper.get_total_visits()
+    total_messages = database_helper.get_message_count(email)
+    #recent_messages = database_helper.get_recent_messages(email, recent_messages_timewindow)
+    recent_count = [0 for x in range(recent_messages_entries)]
+    
+    for item in database_helper.get_recent_messages(email, recent_messages_timewindow):
+      recent_count[(int(time.time()) - item[2]) // recent_messages_resolution] += 1
+    
     user_update = {"current": num_users, "total": total_users}
-    return json.dumps({"success": True, "message": "Update logged in users display.", "data": user_update})
+    visit_update = {"user": user_visits, "total":total_visits}
+    message_update = {"messagecount": total_messages, "recent": recent_count}
+    data_update = {"users": user_update, "visits": visit_update, "messages": message_update}
+    
+    return json.dumps({"success": True, "message": "Graph data.", "data": data_update})
 
 def update_user_count():
     num_users = database_helper.get_number_of_active()
@@ -226,13 +250,33 @@ def update_user_count():
     print "num_users: " + str(num_users)
     print "ntotal_users: " + str(total_users)
 
-    for value in websockets.itervalues():
-        value["websocket"].send(json.dumps({"messagetype": "dataUpdate_usercount", "message": "Update logged in users display.", "data": user_update}))
+    for key, value in websockets.items():
+        if not value["websocket"].closed :
+            value["websocket"].send(json.dumps({"messagetype": "dataUpdate_usercount", "message": "User count data updated.", "data": user_update}))
 
-        
+def update_visit_count():
+    total_visits = database_helper.get_total_visits()
+    print "update_viscount()"
+    print "total_visits: " + str(total_visits)
 
+    for key, value in websockets.items():
+        if not value["websocket"].closed :
+            visit_update = {"user": database_helper.get_user_visits_by_email(key), "total": total_visits}
+            value["websocket"].send(json.dumps({"messagetype": "dataUpdate_visitcount", "message": "Profile visits data updated.", "data": visit_update}))
 
-#app.run(host=os.getenv('IP', '0.0.0.0'),port=int(os.getenv('PORT', 8080)))
+def update_message_count(email):
+    ws = websockets.get(email, None)
+    if ws != None :
+        message_count = database_helper.get_message_count(email)
+        recent_messages = database_helper.get_recent_messages(email, recent_messages_timewindow)
+        recent_count = [0 for x in range(recent_messages_entries)]
+        for item in recent_messages:
+            recent_count[(int(time.time()) - item[2]) // recent_messages_resolution] += 1
+        message_update = {"messagecount": message_count, "recent": recent_count}
+        if not ws["websocket"].closed :
+            ws["websocket"].send(json.dumps({"messagetype": "dataUpdate_messagecount", "message": "Message count data updated.", "data": message_update}))
+    
+    
 
 http_server = WSGIServer(('', 8080), app, handler_class=WebSocketHandler)
 http_server.serve_forever()

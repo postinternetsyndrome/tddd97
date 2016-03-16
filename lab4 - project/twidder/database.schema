@@ -15,6 +15,7 @@ CREATE TABLE Users(email VARCHAR(100) PRIMARY KEY,
                    city VARCHAR(85),
                    country VARCHAR(45),
                    password VARCHAR(50),
+                   profilevisited INT DEFAULT 0 NOT NULL,
                    FOREIGN KEY (gender) REFERENCES Gender(gender)
                    );
                    
@@ -23,7 +24,7 @@ CREATE TABLE Active(email VARCHAR(100) PRIMARY KEY,
                     FOREIGN KEY (email) REFERENCES Users(email)
                     );
                    
-INSERT INTO Users VALUES ("admin@admin0", "admin1", "admin2", "Other", "admin4", "admin5", "admin6");
+INSERT INTO Users(email, firstname, familyname, gender, city, country, password) VALUES ("admin@admin0", "admin1", "admin2", "Other", "admin4", "admin5", "admin6", 10);
                    
 CREATE TABLE Messages(recipient_email VARCHAR(100), 
                       sender_email VARCHAR(100),

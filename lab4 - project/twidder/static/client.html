@@ -55,7 +55,14 @@
                 </div>
             </div>
         </script>
-        <script id="profileview" type=”text/view”> 
+        <script id="profileview" type=”text/view”>
+            <div id="homegraph">
+                <div id="circlegraphs">
+                    <div id="leftgraph"><div>User activity</div><div id="loggedingraph"></div></div><br>
+                    <div id="rightgraph"><div>User popularity</div><div id="visitsgraph"></div></div><br>
+                </div>
+                <div>Recent messages</div><div id="messagesgraph"></div>
+            </div>
             <div class="tabs">
                 <ul class="tab-links noselect">
                     <li onclick="displayHometab()" id="hometab" class="active">Home</li>
@@ -74,7 +81,6 @@
                                 City: <div id="homecity"></div><br>
                                 Country: <div id="homecountry"></div>
                             </div>
-                            <div id="homegraph"></div>
                         </div>
                         <hr>
                         <textarea id="homepostmessagebox" rows="4" cols="50" maxlength="140"></textarea>

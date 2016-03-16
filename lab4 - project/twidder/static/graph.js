@@ -1,20 +1,37 @@
-var dataset = []
+var renderGraphs = function() {
+  renderLoggedInGraph();
+  renderVisitsGraph();
+  renderMessagesGraph();
+}
 
-var renderGraph = function(d3) {
-        'use strict';
-
-        console.log("Graph.js is running.");
-        console.log("currentLoggedInUsers = " + currentLoggedInUsers);
-        console.log("currentTotalUsers = " + currentTotalUsers);
-        
-        var logged_in = currentLoggedInUsers;
+var renderLoggedInGraph = function() {
+        var online = currentLoggedInUsers;
         var offline = currentTotalUsers - currentLoggedInUsers;
-        
-        dataset = [
-          { label: 'Online: ' + logged_in, count: logged_in }, 
+        var dataset = [
+          { label: 'Online: ' + online, count: online }, 
           { label: 'Offline: ' + offline, count: offline }
         ];
-        
+        renderGraph(window.d3, dataset, "loggedingraph")
+}
+
+var renderVisitsGraph = function() {
+        var myvisits = currentVisitsToMyProfile;
+        var totalvisits = currentTotalVisitsToProfiles;
+        var dataset = [
+          { label: 'Mine: ' + myvisits, count: myvisits }, 
+          { label: 'Others: ' + totalvisits, count: totalvisits - myvisits }
+        ];
+        renderGraph(window.d3, dataset, "visitsgraph");
+}
+
+var renderMessagesGraph = function() {
+  var dataset = currentRecentMessagesCount;
+  renderLineGraph(window.d3, dataset, "messagesgraph");
+}
+
+var renderGraph = function(d3, dataset, location) {
+        'use strict';
+
         var width = 150;
         var height = 150;
         var radius = Math.min(width, height) / 2;
@@ -24,13 +41,14 @@ var renderGraph = function(d3) {
 
         var color = d3.scale.category20b();
 
-
-        var homegraph = document.getElementById("homegraph");
-        while (homegraph.firstChild) {
-               homegraph.removeChild(homegraph.firstChild);
+        var graph = document.getElementById(location);
+        if (graph != null){
+          while (graph.firstChild) {
+                 graph.removeChild(graph.firstChild);
+          }
         }
 
-        var svg = d3.select('#homegraph')
+        var svg = d3.select('#' + location)
           .append('svg')
           .attr('width', width)
           .attr('height', height)
@@ -81,12 +99,67 @@ var renderGraph = function(d3) {
 
       };
       
-var updateGraph = function() {
-        console.log("In updateGraph().");
-        console.log("currentLoggedInUsers = " + currentLoggedInUsers);
-        console.log("currentTotalUsers = " + currentTotalUsers);
-        dataset = [
-          { label: 'Logged in users', count: currentLoggedInUsers }, 
-          { label: 'Offline users', count: currentTotalUsers - currentLoggedInUsers }
-        ];
-};
+var renderLineGraph = function(d3, dataset, location) {
+        console.log("graph.js: rendering message graph");
+        
+        var graph = document.getElementById(location);
+        if (graph != null){
+          while (graph.firstChild) {
+                 graph.removeChild(graph.firstChild);
+          }
+        }
+        // Set the dimensions of the canvas / graph
+        var margin = {top: 30, right: 20, bottom: 30, left: 50},
+            ///width = 570 - margin.left - margin.right,
+            //height = 270 - margin.top - margin.bottom;
+            width = 400 - margin.left - margin.right,
+            height = 200 - margin.top - margin.bottom;
+
+        // Set the ranges
+        var x = d3.scale.linear().range([0, width]);
+        var y = d3.scale.linear().range([height, 0]);
+        
+        // Define the axes
+        var xAxis = d3.svg.axis().scale(x)
+            .orient("bottom").ticks(10);
+        
+        var yAxis = d3.svg.axis().scale(y)
+            .orient("left").ticks(5);
+        
+        var processed_data = []
+        for (i = 0; i < dataset.length; ++i) {
+          processed_data[i] = [i, dataset[i]]
+        }
+        // Define the line
+        var valueline = d3.svg.line()
+            .x(function(d) { return x(d[0]); })
+            .y(function(d) { return y(d[1]); });
+          
+        // Adds the svg canvas
+        var svg = d3.select("#messagesgraph")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", 
+                      "translate(" + margin.left + "," + margin.top + ")");
+        
+        x.domain([0, dataset.length]);
+        y.domain([0, Math.max(...dataset)]);
+        
+        // Add the valueline path.
+        svg.append("path")
+            .attr("class", "line")
+            .attr("d", valueline(processed_data));
+    
+        // Add the X Axis
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+    
+        // Add the Y Axis
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis);
+}

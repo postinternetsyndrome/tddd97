@@ -1,5 +1,6 @@
 import sqlite3
 import sys
+import time
 from flask import g
 
 def connect_db():
@@ -44,7 +45,7 @@ def get_user_by_email(email):
     cursor = c.cursor()
     cursor.execute("select * from Users where email = ?", [email])
     entries = cursor.fetchone()
-    print "Return data from (" + str(email) + "): " + str(entries)
+    #print "Return data from (" + str(email) + "): " + str(entries)
     return entries
 
 def get_user_by_token(token):
@@ -56,7 +57,31 @@ def get_user_by_token(token):
         return get_user_by_email(email[0])
     else :    
         return None
-        
+
+def increment_user_visits(email):
+    c = get_db()
+    cursor = c.cursor()
+    try:
+        cursor.execute("update users set profilevisited = profilevisited + 1 where email = ?", [email])
+        c.commit()
+        return True
+    except sqlite3.Error:
+        return False
+
+def get_user_visits_by_email(email):
+    c = get_db()
+    cursor = c.cursor()
+    cursor.execute("select profilevisited from Users where email = ?", [email])
+    visits = cursor.fetchone()
+    return visits[0]
+
+def get_total_visits():
+    c = get_db()
+    cursor = c.cursor()
+    cursor.execute("select sum(profilevisited) from Users")
+    visits = cursor.fetchone()
+    return visits[0]
+    
 def get_number_of_users():
     c = get_db()
     cursor = c.cursor()
@@ -137,24 +162,46 @@ def remove_active(token):
     else :
         return False
 
+def purge_active_users():
+    print "purge_active_users()"
+    c = get_db()
+    cursor = c.cursor()
+    try:
+        cursor.execute("delete from Active")
+        c.commit()
+    except sqlite3.Error:
+        return False
+    return True
+
 def change_password(email, newpass):
     c = get_db()
     cursor = c.cursor()
     
     try:
-        cursor.execute("update Users set password=? where email=?", [newpass, email])
+        cursor.execute("update Users set password = ? where email = ?", [newpass, email])
         c.commit()
     except sqlite3.Error:
         print "change_password(token, oldpass, newpass): Failed to update password."
         return False
     return True
 
-def get_messages(email) :
+def get_messages(email):
     c = get_db()
     cursor = c.cursor()
-    cursor.execute("select * from Messages where recipient_email=?", [email])
+    cursor.execute("select * from Messages where recipient_email = ?", [email])
     return cursor.fetchall()
 
+def get_message_count(email):
+    c = get_db()
+    cursor = c.cursor()
+    cursor.execute("select count(*) from Messages where recipient_email = ?", [email])
+    return cursor.fetchone()[0]
+
+def get_recent_messages(email, timewindow):
+    c = get_db()
+    cursor = c.cursor()
+    cursor.execute("select * from Messages where time > ?",[int(time.time()) - timewindow])
+    return cursor.fetchall()
 
 def add_message(recipient, sender, time, message):
     c = get_db()
@@ -166,6 +213,7 @@ def add_message(recipient, sender, time, message):
         print 'er:', er.message
         return False
     return True
+    
     
 def close():
     get_db().close()
