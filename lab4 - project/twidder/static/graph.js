@@ -4,6 +4,7 @@ var renderGraphs = function() {
   renderMessagesGraph();
 }
 
+
 var renderLoggedInGraph = function() {
         var online = currentLoggedInUsers;
         var offline = currentTotalUsers - currentLoggedInUsers;

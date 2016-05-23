@@ -255,6 +255,7 @@ def get_graph_data(token):
     
     return json.dumps({"success": True, "message": "Graph data.", "data": data_update})
 
+
 def update_user_count():
     num_users = database_helper.get_number_of_active()
     total_users = database_helper.get_number_of_users()

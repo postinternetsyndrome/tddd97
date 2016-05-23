@@ -41,6 +41,7 @@ var attachHandlersProfileView = function(){
     }
 };
 
+
 var ws = null
 
 var loginForm = {
