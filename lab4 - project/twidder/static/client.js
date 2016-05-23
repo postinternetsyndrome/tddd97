@@ -383,7 +383,6 @@ var homePostMessageButton = function(){
         xhttp.onreadystatechange = function() {
         if (xhttp.readyState == 4 && xhttp.status == 200) {
             postresult = JSON.parse(xhttp.responseText);
-            console.log(postresult.message);
             document.getElementById("homepostmessagebox").value="";
             homeRefreshWallMessages();
             document.getElementById("homepostmessageerrormsg").innerHTML=postresult.message;

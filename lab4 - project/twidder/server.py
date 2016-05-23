@@ -17,7 +17,6 @@ recent_messages_resolution = 60
 recent_messages_timewindow = recent_messages_entries * recent_messages_resolution
 
 # DEBUG AND TESTING
-
 @app.route('/')
 def hello():
     return app.send_static_file('client.html')
@@ -37,7 +36,6 @@ def getgender():
     return database_helper.get_gender()
   
 # ACTUAL STUFF
-
 @app.before_first_request
 def initialization():
     if database_helper.purge_active_users():
