@@ -46,7 +46,7 @@ var ws = null
 var loginForm = {
     login: function(formData) {
 
-        var email = formData.email.value;
+        var email = formData.email.value; 
         var password = formData.password.value;
         var xhttp = new XMLHttpRequest();
         var loginresult = null;
@@ -59,7 +59,8 @@ var loginForm = {
                 console.log(loginresult.message);
                 
                 if(loginresult.success) {
-                    ws = new WebSocket("ws://tddd97-labs-lordbamse.c9users.io/websocket/" + loginresult.data);
+                    ws = new WebSocket("ws://" + window.location.host + "/websocket/" + loginresult.data);
+                    //ws = new WebSocket("ws://tddd97-labs-lordbamse.c9users.io/websocket/" + loginresult.data);
                     ws.onmessage = function (event) {
                         var socket_received = JSON.parse(event.data);
                         console.log(socket_received.message);
@@ -199,10 +200,8 @@ var setCurrentView = function(){
                 }
             }
         };
-        xhttp.open("POST", "/get_login_status", true);
-        form = new FormData();
-        form.append("token", localStorage.getItem("logintoken"));
-        xhttp.send(form);
+        xhttp.open("GET", "/get_login_status/" + localStorage.getItem("logintoken"), true);
+        xhttp.send();
     }
 };
 
@@ -261,16 +260,12 @@ var initProfileView = function(){
                     }
                 }
             };
-            xhttp_graph.open("POST", "/get_graph_data", true);
-            form = new FormData();
-            form.append("token", localStorage.getItem("logintoken"));
-            xhttp_graph.send(form);
+            xhttp_graph.open("GET", "/get_graph_data/" + localStorage.getItem("logintoken"), true);
+            xhttp_graph.send();
         }
     };
-    xhttp.open("POST", "/get_user_data_by_token", true);
-    form = new FormData();
-    form.append("token", localStorage.getItem("logintoken"));
-    xhttp.send(form);
+    xhttp.open("GET", "/get_user_data_by_token/" + localStorage.getItem("logintoken"), true);
+    xhttp.send();
 };
 
 
@@ -307,10 +302,8 @@ var homeRefreshWallMessages = function(){
             }
         }
     };
-    xhttp.open("POST", "/get_user_messages_by_token", true);
-    form = new FormData();
-    form.append("token", localStorage.getItem("logintoken"));
-    xhttp.send(form);
+    xhttp.open("GET", "/get_user_messages_by_token/" + localStorage.getItem("logintoken"), true);
+    xhttp.send();
 };
 
 var browseRefreshWallMessages = function(){
@@ -348,12 +341,8 @@ var browseRefreshWallMessages = function(){
                 }
             }
         };
-        xhttp.open("POST", "/get_user_messages_by_email", true);
-        form = new FormData();
-        form.append("token", localStorage.getItem("logintoken"));
-        form.append("email", email);
-        xhttp.send(form);
-
+        xhttp.open("GET", "/get_user_messages_by_email/" + email + "/" + localStorage.getItem("logintoken"), true);
+        xhttp.send();
     }
 };
 
@@ -443,7 +432,7 @@ var browsePostMessageButton = function(){
     
     
 var browseUserButton = function(){
-    var email = document.getElementById('browseuserarea').value
+    var email = document.getElementById('browseuserarea').value;
     
     if (email) {
         var xhttp = new XMLHttpRequest();
@@ -470,11 +459,8 @@ var browseUserButton = function(){
                 }
             }
         };
-        xhttp.open("POST", "/get_user_data_by_email", true);
-        form = new FormData();
-        form.append("token", localStorage.getItem("logintoken"));
-        form.append("email", email);
-        xhttp.send(form);        
+        xhttp.open("GET", "/get_user_data_by_email/" + email + "/" + localStorage.getItem("logintoken"), true);
+        xhttp.send();        
     }
 };
 
